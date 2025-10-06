@@ -1,296 +1,214 @@
 import streamlit as st
 from datetime import datetime
-import csv
-from pathlib import Path
 
-# ---------- CONFIG ----------
-st.set_page_config(
-    page_title="Benessere Açai • Sin azúcar",
-    page_icon="🍇",
-    layout="wide"
-)
+# =================== CONFIG ===================
+st.set_page_config(page_title="Benessere • Açai sin azúcar", page_icon="🍇", layout="wide")
 
-# ---------- ESTILOS ----------
-BRAND = "#4b1a5a"
-BRAND_2 = "#6a2583"
-BRAND_3 = "#e9e1f0"
-WHATSAPP_LINK = "https://wa.me/0000000000?text=Hola%20Benessere,%20quiero%20Açai%20sin%20azúcar%20en%20mi%20campus"
+# Paleta (morado + blanco)
+PRIMARY = "#4b1a5a"      # morado principal
+PRIMARY_DARK = "#3a1446"  # morado oscuro
+TEXT = "#2b2b2b"          # texto
+MUTED = "#5a5a5a"
 
-css = f"""
+# =================== MENÚ (EDITABLE) ===================
+# Cambia estos precios/descripciones cuando quieras
+MENU = {
+    "Bowls de Açaí": [
+        {"Producto": "Bowl Clásico (350 ml)",  "Precio": 4.50, "Incluye": "Açaí sin azúcar, banana, granola sin azúcar"},
+        {"Producto": "Bowl Proteico (450 ml)", "Precio": 5.90, "Incluye": "Açaí sin azúcar, proteína veg., mantequilla de maní, chía"},
+        {"Producto": "Bowl Benessere (500 ml)","Precio": 6.50, "Incluye": "Açaí sin azúcar, mix de frutas, granola, crema de coco"},
+    ],
+    "Zumos Naturales": [
+        {"Producto": "Maracuyá + Piña (400 ml)", "Precio": 2.80, "Incluye": "Fruta natural, agua filtrada"},
+        {"Producto": "Naranja exprimida (400 ml)", "Precio": 3.00, "Incluye": "100% naranja, sin azúcar"},
+        {"Producto": "Fresa + Mango (400 ml)",     "Precio": 3.20, "Incluye": "Fruta natural, sin azúcar"},
+    ],
+    "Cereales / Granolas": [
+        {"Producto": "Granola sin azúcar (100 g)",   "Precio": 1.90, "Incluye": "Avena, frutos secos, semillas"},
+        {"Producto": "Mix crunchy cacao (100 g)",    "Precio": 2.20, "Incluye": "Cacao puro, avena, almendras"},
+    ],
+    "Toppings / Extras": [
+        {"Producto": "Mantequilla de maní (1 porción)", "Precio": 0.70, "Incluye": ""},
+        {"Producto": "Proteína vegana (1 scoop)",       "Precio": 0.90, "Incluye": ""},
+        {"Producto": "Fruta extra",                     "Precio": 0.60, "Incluye": ""},
+        {"Producto": "Chía / Linaza",                   "Precio": 0.40, "Incluye": ""},
+    ],
+}
+
+# =================== ESTILOS ===================
+CSS = f"""
 <style>
-html, body, [class*="st-"] {{
-  font-family: -apple-system, system ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans";
+:root {{
+  --primary: {PRIMARY};
+  --primary-dark: {PRIMARY_DARK};
 }}
-
-/* Navbar */
+html, body, [class*="st-"] {{
+  font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial;
+  color: {TEXT};
+}}
+/* NAV */
 .navbar {{
-  position: sticky; top: 0; z-index: 999;
-  background: #fff; border-bottom: 1px solid rgba(0,0,0,.06);
-  padding: .75rem 0;
+  position: sticky; top:0; z-index:1000; background:#fff; border-bottom:1px solid #eee;
 }}
 .nav-inner {{
+  max-width:1200px; margin:0 auto; padding:.8rem 1rem;
   display:flex; align-items:center; justify-content:space-between;
-  max-width: 1200px; margin: 0 auto; padding: 0 1rem;
 }}
 .nav-left {{ display:flex; align-items:center; gap:.6rem; }}
-.brand-name {{ font-weight: 800; color:{BRAND}; font-size: 1.05rem; }}
-.nav-right a {{ margin-left: 1rem; font-weight:600; text-decoration:none; color:#333; }}
-.nav-right a:hover {{ color:{BRAND}; }}
-
-/* Botones */
-.btn {{ display:inline-block; padding:.7rem 1rem; border-radius:.6rem; font-weight:700; text-decoration:none; }}
-.btn-light {{ background:#fff; color:{BRAND}; }}
-.btn-dark {{ background:#111; color:#fff; }}
-.btn-brand {{ background:{BRAND}; color:#fff; }}
-.btn-outline {{ border:1px solid #fff; color:#fff; background:transparent; }}
-.btn-outline:hover {{ background: rgba(255,255,255,.1); }}
-
-/* HERO */
-.hero {{
-  position: relative; min-height: 84vh; color:#fff; display:flex; align-items:center;
-  background: radial-gradient(1200px 600px at 70% 20%, {BRAND_2} 0%, {BRAND} 40%, #2d0f37 100%);
-  overflow:hidden;
+.brand {{ color: var(--primary); font-weight: 800; letter-spacing:.2px; }}
+.nav-right a {{
+  margin-left:1rem; text-decoration:none; color:#444; font-weight:600;
 }}
-.hero::before {{
-  content:""; position:absolute; inset:0;
-  background: url('https://images.unsplash.com/photo-1549122728-f519709caa9c?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
-  filter: blur(3px) saturate(1.1) brightness(.65); transform: scale(1.05);
-}}
-.hero::after {{
-  content:""; position:absolute; inset:0; background: linear-gradient(180deg, rgba(20,0,30,.35), rgba(20,0,30,.7));
-}}
-.hero-inner {{ position:relative; z-index:2; max-width: 1200px; margin: 0 auto; padding: 4rem 1rem; }}
-.hero h1 {{ font-weight:900; letter-spacing:.2px; line-height:1.04; font-size: clamp(2rem, 5vw, 3.2rem); }}
-.hero p.lead {{ font-size: 1.15rem; opacity:.95; }}
+.nav-right a:hover {{ color: var(--primary); }}
 
-/* Secciones */
-.section {{ padding: 3.5rem 0; }}
-.section-title {{ color:{BRAND}; font-weight:900; font-size: clamp(1.6rem, 3vw, 2rem); }}
-.subtle {{ color:#555; }}
+/* HERO minimal */
+.hero {{ background: var(--primary); color:#fff; }}
+.hero-inner {{ max-width:1200px; margin:0 auto; padding:3.2rem 1rem; }}
+.hero h1 {{ font-weight:900; margin:0 0 .3rem 0; }}
+.hero p {{ opacity:.95; }}
 
-/* Cards */
-.card {{ border:1px solid #eee; border-radius: 14px; padding: 1.1rem; background:#fff; }}
-.badge {{ background:{BRAND}; color:#fff; padding:.2rem .6rem; border-radius:.5rem; font-size:.8rem; font-weight:700; }}
+/* Sections */
+.section {{ max-width:1200px; margin:0 auto; padding: 2.6rem 1rem; }}
+.section h2 {{ color: var(--primary); font-weight:900; margin-bottom:.6rem; }}
+
+/* Table */
+.table {{ width:100%; border-collapse:collapse; }}
+.table th, .table td {{ padding:.65rem .6rem; border-bottom:1px solid #eee; }}
+.table th {{ text-align:left; color:{MUTED}; font-size:.88rem; }}
+.table tr:hover td {{ background:#faf8fb; }}
+
+/* Cards resumen */
+.card {{
+  border:1px solid #eee; border-radius:14px; padding:1rem; background:#fff; text-align:center;
+}}
+.card .price {{ font-size:1.6rem; font-weight:900; color: var(--primary-dark); }}
 
 /* Footer */
-.footer {{ background:#0f0b12; color:#cfc6d8; padding: 1.2rem 0; }}
-.footer a {{ color:#cfc6d8; text-decoration:none; margin-left:1rem; }}
-.footer a:hover {{ color:#fff; text-decoration:underline; }}
-
-/* WhatsApp flotante */
-.wa-float {{
-  position: fixed; right: 16px; bottom: 18px; z-index: 9999;
-  width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  background:#25d366; color:#fff; box-shadow:0 8px 30px rgba(0,0,0,.25);
-  font-size: 24px; text-decoration:none;
+footer {{ background:#fff; border-top:1px solid #eee; }}
+.footer-inner {{
+  max-width:1200px; margin:0 auto; padding:1rem;
+  display:flex; align-items:center; justify-content:space-between; color:#666;
 }}
-.wa-float:hover {{ transform: translateY(-2px); }}
 </style>
 """
-st.markdown(css, unsafe_allow_html=True)
+st.markdown(CSS, unsafe_allow_html=True)
 
-# ---------- NAVBAR ----------
-nav_html = """
+# =================== NAVBAR ===================
+nav = """
 <div class="navbar">
   <div class="nav-inner">
     <div class="nav-left">
-      <img src="logo.png" alt="Benessere" height="28">
-      <span class="brand-name">Benessere</span>
+      <img src="logo.png" height="26" alt="Benessere"/>
+      <span class="brand">Benessere</span>
     </div>
     <div class="nav-right">
-      <a href="#quienes">Quiénes somos</a>
-      <a href="#hacemos">Qué hacemos</a>
-      <a href="#porque">¿Por qué sin azúcar?</a>
-      <a href="#campus">Campus</a>
-      <a class="btn btn-brand" href="#contacto">Saber más</a>
+      <a href="#sobre-nosotros">Sobre nosotros</a>
+      <a href="#menu">Menú</a>
+      <a href="#precios">Precios</a>
+      <a href="#ubicaciones">Ubicaciones</a>
     </div>
   </div>
 </div>
 """
-st.markdown(nav_html, unsafe_allow_html=True)
+st.markdown(nav, unsafe_allow_html=True)
 
-# ---------- HERO ----------
+# =================== HERO ===================
 st.markdown(
-    f"""
-<section class="hero" id="inicio">
+    """
+<div class="hero">
   <div class="hero-inner">
-    <h1>Açai sin azúcar para <u>tu campus</u></h1>
-    <p class="lead">Apoyamos a los estudiantes que quieren comer rico, limpio y rápido. Recetas con 0 azúcar añadida, fruta real y toppings funcionales.</p>
-    <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
-      <a href="#contacto" class="btn btn-light">Cotizar para mi universidad</a>
-      <a href="#porque" class="btn btn-outline">Conoce nuestros ingredientes</a>
-    </div>
+    <h1>Açai sin azúcar, sin rodeos</h1>
+    <p>Snacks limpios, simples y rápidos para tu campus. Carta clara, sin imágenes ruidosas ni formularios.</p>
   </div>
-</section>
+</div>
 """,
     unsafe_allow_html=True
 )
 
-# ---------- QUIENES SOMOS ----------
-st.markdown('<section id="quienes" class="section">', unsafe_allow_html=True)
-col1, col2 = st.columns([1, 1])
-with col1:
-    st.markdown(f"### <span class='section-title'>Quiénes somos</span>", unsafe_allow_html=True)
-    st.write(
-        "Benessere es una cadena de snacks enfocada en açai **sin azúcar añadida**. "
-        "Operamos dentro de campus universitarios con módulos compactos, servicio en menos de 2 minutos "
-        "y menús diseñados por nutrición."
-    )
-with col2:
-    st.image("https://images.unsplash.com/photo-1526312426976-593c2b999c1a?q=80&w=1600&auto=format&fit=crop", use_container_width=True, caption="Açai")
-    st.image("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1600&auto=format&fit=crop", use_container_width=True, caption="Estudiantes")
-st.markdown('</section>', unsafe_allow_html=True)
-
-# ---------- LO QUE HACEMOS ----------
-st.markdown('<section id="hacemos" class="section" style="background:#f7f7fb;">', unsafe_allow_html=True)
-st.markdown(f"### <span class='section-title'>Lo que hacemos</span>", unsafe_allow_html=True)
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown(
-        f"""
-<div class="card">
-  <div style="font-size:1.4rem; color:{BRAND};">🥤</div>
-  <h5>Bowls & Smoothies</h5>
-  <p>Bases de açai sin azúcar, toppings funcionales (granola sin azúcar, frutas, mantequilla de maní natural) y proteínas vegetales.</p>
-</div>""",
-        unsafe_allow_html=True,
-    )
-with c2:
-    st.markdown(
-        f"""
-<div class="card">
-  <div style="font-size:1.4rem; color:{BRAND};">⏱️</div>
-  <h5>Servicio en 2 minutos</h5>
-  <p>Operación pensada para entre-clases: flujo rápido, POS móvil y pedidos por QR.</p>
-</div>""",
-        unsafe_allow_html=True,
-    )
-with c3:
-    st.markdown(
-        f"""
-<div class="card">
-  <div style="font-size:1.4rem; color:{BRAND};">📍</div>
-  <h5>Módulos para campus</h5>
-  <p>Islas compactas de 6–10 m² con instalación eléctrica estándar y cero gas.</p>
-</div>""",
-        unsafe_allow_html=True,
-    )
-st.markdown('</section>', unsafe_allow_html=True)
-
-# ---------- POR QUÉ SIN AZÚCAR ----------
-st.markdown('<section id="porque" class="section">', unsafe_allow_html=True)
-colA, colB = st.columns([1, 1])
-with colA:
-    st.markdown(f"### <span class='section-title'>¿Por qué sin azúcar?</span>", unsafe_allow_html=True)
-    st.markdown(
-        """
-- **Salud metabólica**: Menos picos de glucosa, más energía estable para estudiar.  
-- **Ingredientes reales**: Fruta entera y dulzor natural de la baya.  
-- **Sustentable**: Packaging reciclable y cadena de frío eficiente.  
-"""
-    )
-with colB:
-    st.image("https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1600&auto=format&fit=crop", use_container_width=True, caption="Ingredientes")
-st.markdown('</section>', unsafe_allow_html=True)
-
-# ---------- CAMPUS ----------
-st.markdown('<section id="campus" class="section" style="background:#f7f7fb;">', unsafe_allow_html=True)
-st.markdown(f"### <span class='section-title'>Campus donde operamos</span>", unsafe_allow_html=True)
-cc1, cc2, cc3 = st.columns(3)
-with cc1:
-    st.markdown(
-        """
-<div class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <h5 style="margin:0;">Universidad Central</h5>
-    <span class="badge">Activo</span>
-  </div>
-  <p class="subtle">Pabellón A • Patio principal</p>
-  <p>Horario: Lun–Vie 8:00–17:00</p>
-</div>""",
-        unsafe_allow_html=True,
-    )
-with cc2:
-    st.markdown(
-        """
-<div class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <h5 style="margin:0;">Tecnológico Norte</h5>
-    <span class="badge">Próximo</span>
-  </div>
-  <p class="subtle">Centro Deportivo</p>
-  <p>Inicio previsto: Noviembre</p>
-</div>""",
-        unsafe_allow_html=True,
-    )
-with cc3:
-    st.markdown(
-        """
-<div class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <h5 style="margin:0;">USalud</h5>
-    <span class="badge">Explorando</span>
-  </div>
-  <p class="subtle">Facultad de Medicina</p>
-  <p>Contactando a Dirección de Bienestar</p>
-</div>""",
-        unsafe_allow_html=True,
-    )
-st.markdown('</section>', unsafe_allow_html=True)
-
-# ---------- CONTACTO ----------
-st.markdown(
-    f"""
-<section id="contacto" class="section" style="color:#fff; background:
-radial-gradient(1200px 600px at 70% 20%, {BRAND_2} 0%, {BRAND} 40%, #2d0f37 100%);">
-  <div style="max-width:1200px; margin:0 auto;">
-    <h2 style="font-weight:900;">¿Lo llevamos a tu universidad?</h2>
-    <p class="subtle" style="color:#eee;">Escríbenos por WhatsApp o deja tus datos y te contactamos hoy.</p>
-    <a class="btn btn-light" href="{WHATSAPP_LINK}" target="_blank">💬 Hablar por WhatsApp</a>
-  </div>
-</section>
-""",
-    unsafe_allow_html=True,
+# =================== SOBRE NOSOTROS ===================
+st.markdown('<div class="section" id="sobre-nosotros">', unsafe_allow_html=True)
+st.markdown("## Sobre nosotros")
+st.write(
+    "Benessere nace para ofrecer una alternativa *saludable y transparente* dentro de los campus universitarios. "
+    "Trabajamos con *bases de açai sin azúcar añadida*, toppings funcionales y zumos naturales. "
+    "Priorizamos logística simple, tiempos de espera cortos y una carta fácil de entender."
 )
 
-st.markdown("### Déjanos tus datos")
-with st.form("lead_form", clear_on_submit=True):
-    nombre = st.text_input("Nombre")
-    email = st.text_input("Email")
-    campus = st.text_input("Universidad / Campus")
-    mensaje = st.text_area("Mensaje")
-    enviado = st.form_submit_button("Enviar")
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown("### Enfoque")
+    st.write("- Ingredientes simples.\n- Operación ágil.\n- Precios claros.")
+with col2:
+    st.markdown("### Lo que no hacemos")
+    st.write("- Azúcar añadida.\n- Promesas vacías.\n- Esperas eternas.")
+with col3:
+    st.markdown("### Valores")
+    st.write("- Honestidad.\n- Consistencia.\n- Respeto por tu tiempo.")
+st.markdown('</div>', unsafe_allow_html=True)
 
-    if enviado:
-        path = Path("leads.csv")
-        write_header = not path.exists()
-        with path.open("a", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            if write_header:
-                w.writerow(["timestamp", "nombre", "email", "campus", "mensaje"])
-            w.writerow([datetime.utcnow().isoformat(), nombre, email, campus, mensaje])
-        st.success("¡Gracias! Recibimos tus datos. Te contactaremos pronto.")
+# =================== MENÚ ===================
+st.markdown('<div class="section" id="menu">', unsafe_allow_html=True)
+st.markdown("## Menú")
+st.write("Estructura base. Luego actualizamos con tus datos oficiales de costos y gramajes.")
 
-# ---------- FOOTER ----------
-year = datetime.now().year
+for categoria, items in MENU.items():
+    st.markdown(f"### {categoria}")
+    st.markdown('<table class="table">', unsafe_allow_html=True)
+    st.markdown("<thead><tr><th>Producto</th><th>Incluye</th><th>Precio (USD)</th></tr></thead>", unsafe_allow_html=True)
+    st.markdown("<tbody>", unsafe_allow_html=True)
+    for it in items:
+        incluye = it.get("Incluye", "")
+        precio = f"{it['Precio']:.2f}"
+        st.markdown(f"<tr><td>{it['Producto']}</td><td>{incluye}</td><td><strong>${precio}</strong></td></tr>", unsafe_allow_html=True)
+    st.markdown("</tbody></table>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# =================== PRECIOS RESUMEN ===================
+st.markdown('<div class="section" id="precios">', unsafe_allow_html=True)
+st.markdown("## Precios (resumen)")
+c1, c2, c3, c4 = st.columns(4)
+for col, (name, price) in zip([c1, c2, c3, c4], [
+    ("Bowl Clásico", 4.50),
+    ("Bowl Proteico", 5.90),
+    ("Bowl Benessere", 6.50),
+    ("Zumos (desde)", 2.80),
+]):
+    with col:
+        st.markdown(
+            f"""
+<div class="card">
+  <div style="font-weight:800; color:{PRIMARY}; margin-bottom:.2rem;">{name}</div>
+  <div class="price">${price:.2f}</div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+st.markdown('</div>', unsafe_allow_html=True)
+
+# =================== UBICACIONES ===================
+st.markdown('<div class="section" id="ubicaciones">', unsafe_allow_html=True)
+st.markdown("## Ubicaciones")
+colu1, colu2, colu3 = st.columns(3)
+with colu1:
+    st.markdown("*Universidad Central*\n\nPabellón A – Patio principal\n\n_Lun–Vie 8:00–17:00_")
+with colu2:
+    st.markdown("*Tecnológico Norte*\n\nCentro Deportivo – Próxima apertura\n\n_Lun–Vie 9:00–16:00_")
+with colu3:
+    st.markdown("*USalud*\n\nFacultad de Medicina – Exploración\n\n_Horarios por definir_")
+st.markdown('</div>', unsafe_allow_html=True)
+
+# =================== FOOTER ===================
 st.markdown(
     f"""
-<div class="footer">
-  <div class="nav-inner" style="max-width:1200px; margin:0 auto;">
-    <div style="display:flex; align-items:center; gap:.6rem;">
-      <img src="logo.png" alt="Benessere" height="22">
-      <span>© {year} Benessere • Açai sin azúcar</span>
+<footer>
+  <div class="footer-inner">
+    <div style="display:flex; align-items:center; gap:.5rem;">
+      <img src="logo.png" height="20" alt="Benessere"/>
+      <span>© {datetime.now().year} Benessere</span>
     </div>
-    <div>
-      <a href="#quienes">Quiénes somos</a>
-      <a href="#hacemos">Qué hacemos</a>
-      <a href="#porque">Ingredientes</a>
-      <a href="#campus">Campus</a>
-    </div>
+    <div>Hecho con cuidado: morado + blanco, sin azúcar añadida.</div>
   </div>
-</div>
-
-<a class="wa-float" href="{WHATSAPP_LINK}" target="_blank" title="Escríbenos por WhatsApp">✆</a>
+</footer>
 """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
